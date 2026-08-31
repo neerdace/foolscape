@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foolscap — a script writing studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=PT+Mono&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Naskh+Arabic:wght@400;600&family=Noto+Sans+Hebrew:wght@400;600&family=Noto+Sans+SC:wght@400;600&family=Noto+Sans+JP:wght@400;600&family=Noto+Sans+KR:wght@400;600&family=Noto+Sans+Bengali:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&family=Noto+Sans+Thai:wght@400;600&family=Noto+Sans+Georgian:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B1D24;
+    --ink-soft:#3A3844;
+    --paper:#F7F3EA;
+    --paper-dim:#EFE9D9;
+    --white:#FFFDF8;
+    --rule:#D8D0BC;
+    --oxide:#A6402C;
+    --oxide-dark:#7E2F20;
+    --forest:#2E5339;
+    --muted:#8B8578;
+    --font-display:'Fraunces', serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'Courier Prime', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  a{color:inherit;}
+  ::selection{background:var(--oxide);color:var(--white);}
+
+  /* ---------- layout shell ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:40;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 32px;
+    background:rgba(247,243,234,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--rule);
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;cursor:pointer;user-select:none;}
+  .brand .mark{
+    font-family:var(--font-display);font-weight:700;font-size:22px;letter-spacing:0.5px;
+  }
+  .brand .mark em{font-style:italic;color:var(--oxide);}
+  .brand .sub{font-size:11px;color:var(--muted);letter-spacing:0.08em;}
+  nav.mainnav{display:flex;gap:4px;flex-wrap:wrap;}
+  nav.mainnav button{
+    font-family:var(--font-body);font-size:14px;font-weight:500;
+    background:none;border:none;color:var(--ink-soft);
+    padding:8px 14px;border-radius:3px;cursor:pointer;
+    border-bottom:2px solid transparent;
+    transition:color .15s, border-color .15s;
+  }
+  nav.mainnav button:hover{color:var(--oxide);}
+  nav.mainnav button.active{color:var(--oxide);border-bottom-color:var(--oxide);}
+
+  .view{display:none;}
+  .view.active{display:block;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 32px;}
+
+  footer.site{
+    border-top:1px solid var(--rule);
+    padding:28px 32px 40px;margin-top:64px;
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+  }
+  footer.site .fmark{font-family:var(--font-display);font-size:15px;}
+  footer.site .fnote{font-size:12px;color:var(--muted);}
+
+  /* ---------- HOME ---------- */
+  .titlepage{
+    max-width:640px;margin:64px auto 40px;text-align:center;
+    padding:56px 40px 48px;background:var(--white);
+    border:1px solid var(--rule);box-shadow:0 1px 0 var(--rule), 0 18px 40px -28px rgba(27,29,36,0.35);
+  }
+  .titlepage .eyebrow-line{
+    width:64px;height:2px;background:var(--oxide);margin:0 auto 26px;
+  }
+  .titlepage h1{
+    font-family:var(--font-display);font-weight:600;font-size:44px;line-height:1.1;
+    margin:0 0 6px;letter-spacing:-0.01em;
+  }
+  .titlepage h1 i{color:var(--oxide);font-style:italic;font-weight:500;}
+  .titlepage .byline{font-family:var(--font-mono);font-size:13px;color:var(--muted);margin-top:22px;}
+  .titlepage .byline b{color:var(--ink);font-weight:700;}
+  .titlepage .desc{
+    font-family:var(--font-body);font-size:15.5px;line-height:1.65;color:var(--ink-soft);
+    max-width:460px;margin:22px auto 0;
+  }
+  .cta-row{display:flex;gap:12px;justify-content:center;margin-top:30px;flex-wrap:wrap;}
+  .btn{
+    font-family:var(--font-body);font-weight:600;font-size:14px;
+    padding:12px 22px;border-radius:2px;border:1px solid var(--ink);
+    background:var(--ink);color:var(--paper);cursor:pointer;
+    transition:transform .12s ease, background .15s;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--rule);}
+  .btn.ghost:hover{border-color:var(--ink);}
+  .btn.oxide{background:var(--oxide);border-color:var(--oxide);color:var(--white);}
+  .btn.oxide:hover{background:var(--oxide-dark);}
+  .btn.small{padding:7px 14px;font-size:12.5px;}
+  .btn.danger{background:transparent;border-color:var(--rule);color:var(--oxide-dark);}
+
+  .section-head{max-width:640px;margin:88px auto 30px;text-align:left;}
+  .section-head .tag{font-family:var(--font-mono);font-size:12px;color:var(--oxide);}
+  .section-head h2{font-family:var(--font-display);font-size:30px;font-weight:600;margin:8px 0 10px;}
+  .section-head p{font-size:15px;color:var(--ink-soft);line-height:1.6;max-width:560px;}
+
+  .feature-strip{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+    background:var(--rule);border:1px solid var(--rule);margin-bottom:20px;
+  }
+  .feature-strip .cell{background:var(--white);padding:26px 24px;}
+  .feature-strip .cell h3{font-family:var(--font-display);font-size:18px;margin:0 0 8px;font-weight:600;}
+  .feature-strip .cell p{font-size:13.5px;color:var(--ink-soft);line-height:1.55;margin:0;}
+  .feature-strip .cell .glyph{font-family:var(--font-mono);color:var(--oxide);font-size:13px;margin-bottom:12px;display:block;}
+
+  .format-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:8px;}
+  .format-card{
+    background:var(--white);border:1px solid var(--rule);padding:20px;cursor:pointer;
+    transition:border-color .15s, transform .12s;
+  }
+  .format-card:hover{border-color:var(--oxide);transform:translateY(-2px);}
+  .format-card .fname{font-family:var(--font-display);font-weight:600;font-size:17px;margin-bottom:6px;}
+  .format-card .fdesc{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;}
+  .format-card .fmini{
+    background:var(--paper-dim);padding:10px 12px;font-family:var(--font-mono);font-size:10px;line-height:1.7;color:var(--ink-soft);
+  }
+
+  .lang-strip{
+    display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 8px;
+  }
+  .lang-pill{
+    border:1px solid var(--rule);background:var(--white);padding:9px 14px;font-size:14px;
+  }
+
+  /* ---------- EDITOR ---------- */
+  .editor-shell{display:flex;min-height:calc(100vh - 60px);}
+  .side-tools{
+    width:250px;flex:none;border-right:1px solid var(--rule);
+    padding:22px 18px;background:var(--paper-dim);
+  }
+  .side-tools h4{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--muted);
+    margin:22px 0 10px;text-transform:uppercase;
+  }
+  .side-tools h4:first-child{margin-top:0;}
+  select.tool-select, input.tool-input{
+    width:100%;padding:9px 10px;font-family:var(--font-body);font-size:13.5px;
+    border:1px solid var(--rule);background:var(--white);color:var(--ink);
+    border-radius:2px;
+  }
+  .el-btns{display:flex;flex-direction:column;gap:6px;}
+  .el-btn{
+    text-align:left;padding:9px 11px;font-size:13px;font-family:var(--font-body);
+    background:var(--white);border:1px solid var(--rule);cursor:pointer;border-radius:2px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .el-btn:hover{border-color:var(--oxide);}
+  .el-btn.current{border-color:var(--oxide);background:#fff;box-shadow:inset 3px 0 0 var(--oxide);}
+  .el-btn kbd{font-family:var(--font-mono);font-size:10px;color:var(--muted);}
+  .stat-line{font-size:12px;color:var(--muted);margin-top:4px;}
+  .side-actions{display:flex;flex-direction:column;gap:8px;margin-top:22px;}
+
+  .editor-main{flex:1;padding:30px 30px 100px;overflow:auto;}
+  .editor-header{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    max-width:920px;margin:0 auto 22px;gap:16px;flex-wrap:wrap;
+  }
+  .title-input{
+    font-family:var(--font-display);font-size:24px;font-weight:600;border:none;
+    background:transparent;border-bottom:2px solid transparent;padding:2px 0;min-width:260px;
+    color:var(--ink);
+  }
+  .title-input:focus{outline:none;border-bottom-color:var(--oxide);}
+  .header-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+  .page{
+    max-width:760px;margin:0 auto 40px;background:var(--white);
+    box-shadow:0 1px 0 var(--rule), 0 20px 44px -30px rgba(27,29,36,0.4);
+    border:1px solid var(--rule);
+    padding:64px 60px;min-height:600px;
+  }
+  .el{
+    outline:none;border:none;min-height:1.2em;
+    font-size:14.5px;line-height:1.75;color:var(--ink);
+    padding:1px 2px;margin:0;white-space:pre-wrap;word-wrap:break-word;
+  }
+  .el:empty:before{content:attr(data-ph);color:#c7c0ac;}
+  .el.focused{background:rgba(166,64,44,0.05);}
+
+  /* screenplay + sitcom */
+  .page[data-format="screenplay"] .el[data-type="scene_heading"],
+  .page[data-format="sitcom"] .el[data-type="scene_heading"]{
+    text-transform:uppercase;font-weight:700;font-family:var(--font-mono);
+    margin-top:22px;letter-spacing:.02em;
+  }
+  .page[data-format="screenplay"] .el[data-type="action"],
+  .page[data-format="sitcom"] .el[data-type="action"]{font-family:var(--font-mono);margin-top:12px;}
+  .page[data-format="screenplay"] .el[data-type="character"],
+  .page[data-format="sitcom"] .el[data-type="character"]{
+    text-transform:uppercase;font-family:var(--font-mono);margin:18px 0 0 34%;font-weight:700;
+  }
+  .page[data-format="screenplay"] .el[data-type="parenthetical"],
+  .page[data-format="sitcom"] .el[data-type="parenthetical"]{
+    font-family:var(--font-mono);font-style:italic;margin:0 20% 0 28%;font-size:13.5px;
+  }
+  .page[data-format="screenplay"] .el[data-type="dialogue"],
+  .page[data-format="sitcom"] .el[data-type="dialogue"]{
+    font-family:var(--font-mono);margin:0 16% 0 20%;
+  }
+  .page[data-format="sitcom"] .el[data-type="dialogue"]{line-height:2;}
+  .page[data-format="screenplay"] .el[data-type="transition"],
+  .page[data-format="sitcom"] .el[data-type="transition"]{
+    text-transform:uppercase;font-family:var(--font-mono);text-align:right;margin-top:14px;font-weight:700;
+  }
+  .page[data-format="screenplay"] .el[data-type="shot"],
+  .page[data-format="sitcom"] .el[data-type="shot"]{
+    text-transform:uppercase;font-family:var(--font-mono);margin-top:14px;font-weight:700;
+  }
+
+  /* stage play */
+  .page[data-format="stage"] .el[data-type="act_scene"]{
+    text-align:center;text-transform:uppercase;font-weight:700;font-family:var(--font-display);
+    font-size:16px;margin-top:26px;letter-spacing:.05em;
+  }
+  .page[data-format="stage"] .el[data-type="stage_direction"]{
+    font-style:italic;color:var(--ink-soft);margin:10px 10%;font-size:13.5px;
+  }
+  .page[data-format="stage"] .el[data-type="character"]{
+    text-align:center;text-transform:uppercase;font-weight:700;margin-top:18px;letter-spacing:.03em;
+  }
+  .page[data-format="stage"] .el[data-type="dialogue"]{margin:2px 8% 0;}
+
+  /* novel */
+  .page[data-format="novel"]{font-family:Georgia, 'Fraunces', serif;}
+  .page[data-format="novel"] .el[data-type="chapter"]{
+    text-align:center;font-family:var(--font-display);font-size:24px;font-weight:600;margin:8px 0 26px;
+  }
+  .page[data-format="novel"] .el[data-type="scene_break"]{
+    text-align:center;color:var(--muted);margin:22px 0;letter-spacing:.4em;
+  }
+  .page[data-format="novel"] .el[data-type="paragraph"]{
+    font-family:Georgia, serif;text-indent:2em;margin-top:0;font-size:15.5px;line-height:1.85;
+  }
+
+  /* radio */
+  .page[data-format="radio"] .el[data-type="scene_heading"]{
+    text-transform:uppercase;font-weight:700;font-family:var(--font-mono);margin-top:20px;
+  }
+  .page[data-format="radio"] .el[data-type="character"]{
+    text-transform:uppercase;font-family:var(--font-mono);font-weight:700;margin-top:16px;
+  }
+  .page[data-format="radio"] .el[data-type="dialogue"]{font-family:var(--font-mono);margin:2px 0 0 12%;}
+  .page[data-format="radio"] .el[data-type="sfx"]{
+    text-transform:uppercase;font-style:italic;font-family:var(--font-mono);color:var(--oxide-dark);margin-top:14px;
+  }
+
+  .empty-state{
+    max-width:520px;margin:80px auto;text-align:center;color:var(--ink-soft);
+  }
+  .empty-state h3{font-family:var(--font-display);font-size:22px;margin-bottom:10px;}
+
+  /* ---------- LIBRARY ---------- */
+  .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:26px 0 60px;}
+  .lib-card{
+    background:var(--white);border:1px solid var(--rule);padding:18px;cursor:pointer;position:relative;
+    transition:border-color .15s,transform .12s;
+  }
+  .lib-card:hover{border-color:var(--oxide);transform:translateY(-2px);}
+  .lib-card .lname{font-family:var(--font-display);font-weight:600;font-size:16.5px;margin-bottom:6px;}
+  .lib-card .ltag{
+    display:inline-block;font-family:var(--font-mono);font-size:10.5px;color:var(--oxide);
+    border:1px solid var(--oxide);padding:2px 6px;border-radius:2px;margin-bottom:10px;
+  }
+  .lib-card .lmeta{font-size:12px;color:var(--muted);margin-bottom:14px;}
+  .lib-card .lactions{display:flex;gap:6px;flex-wrap:wrap;}
+  .new-card{
+    border:1px dashed var(--rule);display:flex;align-items:center;justify-content:center;
+    color:var(--muted);font-family:var(--font-display);font-size:16px;cursor:pointer;min-height:140px;
+  }
+  .new-card:hover{border-color:var(--oxide);color:var(--oxide);}
+
+  .panel{
+    background:var(--white);border:1px solid var(--rule);padding:24px;max-width:520px;margin:20px 0 50px;
+  }
+  .panel h3{font-family:var(--font-display);margin-top:0;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-family:var(--font-mono);}
+
+  /* ---------- FORMATS PAGE ---------- */
+  .fmt-detail{
+    display:grid;grid-template-columns:1fr 1fr;gap:26px;background:var(--white);
+    border:1px solid var(--rule);padding:26px;margin-bottom:26px;
+  }
+  .fmt-detail h3{font-family:var(--font-display);font-size:20px;margin:0 0 8px;}
+  .fmt-detail p{font-size:13.5px;color:var(--ink-soft);line-height:1.6;}
+  .fmt-detail ul{margin:12px 0 0;padding-left:18px;font-size:13px;color:var(--ink-soft);}
+  .fmt-preview{background:var(--paper-dim);padding:20px;font-size:11.5px;}
+
+  /* ---------- FONTS PAGE ---------- */
+  .font-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:26px 0 60px;}
+  .font-card{background:var(--white);border:1px solid var(--rule);padding:20px;}
+  .font-card .flabel{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:10px;}
+  .font-card .fsample{font-size:20px;line-height:1.5;}
+
+  /* ---------- HELP ---------- */
+  .kbd-table{width:100%;border-collapse:collapse;margin:20px 0 50px;background:var(--white);border:1px solid var(--rule);}
+  .kbd-table td, .kbd-table th{padding:10px 14px;border-bottom:1px solid var(--rule);font-size:13.5px;text-align:left;}
+  .kbd-table th{font-family:var(--font-mono);font-size:11px;color:var(--muted);text-transform:uppercase;}
+  .kbd-table kbd{
+    font-family:var(--font-mono);background:var(--paper-dim);padding:2px 7px;border-radius:3px;border:1px solid var(--rule);
+  }
+
+  @media (max-width:860px){
+    .editor-shell{flex-direction:column;}
+    .side-tools{width:100%;border-right:none;border-bottom:1px solid var(--rule);}
+    .feature-strip{grid-template-columns:1fr;}
+    .fmt-detail{grid-template-columns:1fr;}
+    .page{padding:34px 22px;}
+    nav.mainnav{display:none;}
+  }
+
+  @media print{
+    body *{visibility:hidden;}
+    #editorView, #editorView *{visibility:visible;}
+    #editorView{position:absolute;top:0;left:0;width:100%;}
+    .side-tools, .editor-header, footer.site, .topbar{display:none !important;}
+    .editor-main{padding:0;}
+    .page{
+      box-shadow:none;border:none;max-width:none;width:8.5in;min-height:11in;
+      margin:0 auto;padding:1in 1in 1in 1.5in;
+    }
+    .page[data-format="stage"], .page[data-format="novel"], .page[data-format="radio"]{padding:1in;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand" data-nav="home">
+    <span class="mark">Foolscap<em>.</em></span>
+    <span class="sub">SCRIPT&nbsp;STUDIO</span>
+  </div>
+  <nav class="mainnav">
+    <button data-nav="home">Home</button>
+    <button data-nav="editor">Editor</button>
+    <button data-nav="library">My Scripts</button>
+    <button data-nav="formats">Formats</button>
+    <button data-nav="fonts">Fonts &amp; Languages</button>
+    <button data-nav="help">Help</button>
+  </nav>
+</div>
+
+<!-- ============ HOME ============ -->
+<section id="home" class="view">
+  <div class="wrap">
+    <div class="titlepage">
+      <div class="eyebrow-line"></div>
+      <h1>FOOLSCAP</h1>
+      <h1><i>a script writing studio</i></h1>
+      <p class="desc">Write screenplays, stage plays, sitcoms, novels and radio drama with proper industry formatting — in any of sixteen languages and their native scripts.</p>
+      <div class="byline">Written for <b>writers</b> &nbsp;·&nbsp; Draft No. 1 &nbsp;·&nbsp; <span id="todayDate"></span></div>
+      <div class="cta-row">
+        <button class="btn oxide" data-nav="editor">Open the editor</button>
+        <button class="btn ghost" data-nav="formats">See the formats</button>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div class="tag">01 — WHAT'S INSIDE</div>
+      <h2>Everything a page needs</h2>
+      <p>A page-accurate editor, five industry formats, and real print margins — so what you see is what a reader, actor or director will hold.</p>
+    </div>
+    <div class="feature-strip">
+      <div class="cell">
+        <span class="glyph">TAB / ENTER</span>
+        <h3>Format-aware typing</h3>
+        <p>Tab cycles between element types, Enter jumps to the sensible next one — scene heading to action, character to dialogue — the way Final Draft and its cousins behave.</p>
+      </div>
+      <div class="cell">
+        <span class="glyph">5 FORMATS</span>
+        <h3>Screenplay to novel</h3>
+        <p>Screenplay, stage play, multi-camera sitcom, prose manuscript and radio drama, each with its own margins, capitalisation and spacing rules.</p>
+      </div>
+      <div class="cell">
+        <span class="glyph">16 LANGUAGES</span>
+        <h3>Native scripts, native fonts</h3>
+        <p>Switch the editor's font to match Devanagari, Arabic, Hebrew, CJK, Bengali, Tamil, Thai, Georgian and Latin scripts, with correct text direction.</p>
+      </div>
+      <div class="cell">
+        <span class="glyph">FILE → PAGE</span>
+        <h3>True print margins</h3>
+        <p>Printing or saving to PDF uses real industry margins — 1.5 inches on the left for a screenplay, ready to bind.</p>
+      </div>
+      <div class="cell">
+        <span class="glyph">MY SCRIPTS</span>
+        <h3>A working library</h3>
+        <p>Keep several drafts open at once, duplicate a script before a rewrite, rename and retitle without losing your place.</p>
+      </div>
+      <div class="cell">
+        <span class="glyph">.TXT / PRINT</span>
+        <h3>Export anywhere</h3>
+        <p>Pull a plain-text draft for email or table reads, or print a properly paginated copy for the table.</p>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div class="tag">02 — FORMATS</div>
+      <h2>Pick a shape for the page</h2>
+      <p>Every format below is a full editor mode with its own toolbar of elements.</p>
+    </div>
+    <div class="format-gallery" id="homeFormatGallery"></div>
+
+    <div class="section-head">
+      <div class="tag">03 — LANGUAGES</div>
+      <h2>Write in the script your story needs</h2>
+      <p>The font system swaps typefaces per language, including right-to-left layout for Arabic and Hebrew.</p>
+    </div>
+    <div class="lang-strip" id="homeLangStrip"></div>
+    <div style="margin:34px 0 10px;">
+      <button class="btn ghost" data-nav="fonts">Browse all languages →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EDITOR ============ -->
+<section id="editor" class="view">
+  <div class="editor-shell" id="editorView">
+    <aside class="side-tools" id="sideTools"></aside>
+    <main class="editor-main" id="editorMain"></main>
+  </div>
+</section>
+
+<!-- ============ LIBRARY ============ -->
+<section id="library" class="view">
+  <div class="wrap">
+    <div class="section-head" style="margin-top:50px;">
+      <div class="tag">MY SCRIPTS</div>
+      <h2>Your working drafts</h2>
+      <p>Scripts live for this session — export or print anything you want to keep before you close the tab.</p>
+    </div>
+    <div id="libPanelHost"></div>
+    <div class="lib-grid" id="libGrid"></div>
+  </div>
+</section>
+
+<!-- ============ FORMATS ============ -->
+<section id="formats" class="view">
+  <div class="wrap">
+    <div class="section-head" style="margin-top:50px;">
+      <div class="tag">FORMAT GUIDE</div>
+      <h2>Five ways to lay out a page</h2>
+      <p>Each format changes the toolbar's element list, the margins, and how Tab/Enter move you through the page.</p>
+    </div>
+    <div id="fmtDetailHost"></div>
+  </div>
+</section>
+
+<!-- ============ FONTS ============ -->
+<section id="fonts" class="view">
+  <div class="wrap">
+    <div class="section-head" style="margin-top:50px;">
+      <div class="tag">FONT SYSTEM</div>
+      <h2>Sixteen languages, native type</h2>
+      <p>Open a script in the editor and choose any of these from the language menu — the whole page re-sets its typeface and direction.</p>
+    </div>
+    <div class="font-grid" id="fontGrid"></div>
+  </div>
+</section>
+
+<!-- ============ HELP ============ -->
+<section id="help" class="view">
+  <div class="wrap">
+    <div class="section-head" style="margin-top:50px;">
+      <div class="tag">HELP</div>
+      <h2>Shortcuts &amp; quick guide</h2>
+      <p>The editor is built to be typed through without touching the toolbar.</p>
+    </div>
+    <table class="kbd-table">
+      <tr><th>Key</th><th>What it does</th></tr>
+      <tr><td><kbd>Enter</kbd></td><td>Finish the current line and start a new one, already set to the sensible next element type (e.g. Character → Dialogue).</td></tr>
+      <tr><td><kbd>Tab</kbd></td><td>Cycle the current line forward through the element types available in this format.</td></tr>
+      <tr><td><kbd>Shift</kbd> + <kbd>Tab</kbd></td><td>Cycle the current line backward through element types.</td></tr>
+      <tr><td><kbd>Backspace</kbd></td><td>On an empty line, deletes it and returns you to the end of the line above.</td></tr>
+    </table>
+
+    <div class="section-head">
+      <div class="tag">ABOUT</div>
+      <h2>Why "Foolscap"</h2>
+      <p>Foolscap is the old name for the long sheet of paper that scripts and legal drafts were once written on — this is that page, rebuilt for the screen and set in whatever language your story is told in.</p>
+    </div>
+    <div style="margin-bottom:70px;color:var(--ink-soft);font-size:14px;line-height:1.7;max-width:600px;">
+      <p>Scripts you write here stay in this browser tab for the length of your session. Use <b>Export .txt</b> for a plain draft, or <b>Print / Save as PDF</b> from the editor toolbar for a properly paginated copy — do this before you close the tab, since nothing is saved to a server.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <span class="fmark">Foolscap<em style="color:var(--oxide)">.</em></span>
+  <span class="fnote">A script writing studio — five formats, sixteen languages, one page.</span>
+</footer>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== DATA: LANGUAGES ===================== */
+const LANGUAGES = [
+  {code:'en', label:'English', native:'English', font:"'Courier Prime', monospace", sample:"INT. KITCHEN — DAY\nMara pours two cups of coffee she has no intention of drinking.", rtl:false},
+  {code:'ne', label:'Nepali', native:'नेपाली', font:"'Noto Sans Devanagari', sans-serif", sample:"भित्री दृश्य — भान्साकोठा — दिउँसो\nमारा दुई कप कफी खन्याउँछिन्, जुन उनले पिउने इच्छा राखेकी छैनन्।", rtl:false},
+  {code:'hi', label:'Hindi', native:'हिन्दी', font:"'Noto Sans Devanagari', sans-serif", sample:"भीतरी दृश्य — रसोई — दिन\nमारा दो कप कॉफ़ी डालती है जिसे वह पीने का इरादा नहीं रखती।", rtl:false},
+  {code:'ar', label:'Arabic', native:'العربية', font:"'Noto Naskh Arabic', serif", sample:"داخلي - المطبخ - نهار\nتسكب مارا كوبين من القهوة لا تنوي شربهما.", rtl:true},
+  {code:'he', label:'Hebrew', native:'עברית', font:"'Noto Sans Hebrew', sans-serif", sample:"פנים - מטבח - יום\nמארה מוזגת שתי כוסות קפה שאין בכוונתה לשתות.", rtl:true},
+  {code:'zh', label:'Chinese', native:'中文', font:"'Noto Sans SC', sans-serif", sample:"内景 — 厨房 — 白天\n玛拉倒了两杯她根本不打算喝的咖啡。", rtl:false},
+  {code:'ja', label:'Japanese', native:'日本語', font:"'Noto Sans JP', sans-serif", sample:"内景 — キッチン — 昼\nマーラは飲むつもりのないコーヒーを二杯注ぐ。", rtl:false},
+  {code:'ko', label:'Korean', native:'한국어', font:"'Noto Sans KR', sans-serif", sample:"실내 — 부엌 — 낮\n마라는 마실 생각도 없는 커피 두 잔을 따른다.", rtl:false},
+  {code:'bn', label:'Bengali', native:'বাংলা', font:"'Noto Sans Bengali', sans-serif", sample:"অভ্যন্তরীণ — রান্নাঘর — দিন\nমারা দুই কাপ কফি ঢালে, যা খাওয়ার কোনো ইচ্ছা তার নেই।", rtl:false},
+  {code:'ta', label:'Tamil', native:'தமிழ்', font:"'Noto Sans Tamil', sans-serif", sample:"உள்ளிடம் — சமையலறை — பகல்\nமாரா குடிக்க விருப்பமில்லாத இரண்டு கப் காபியை ஊற்றுகிறாள்.", rtl:false},
+  {code:'th', label:'Thai', native:'ไทย', font:"'Noto Sans Thai', sans-serif", sample:"ภายใน — ห้องครัว — กลางวัน\nมาราเทกาแฟสองถ้วยที่เธอไม่ตั้งใจจะดื่ม", rtl:false},
+  {code:'ru', label:'Russian', native:'Русский', font:"'PT Mono', monospace", sample:"ИНТ. КУХНЯ — ДЕНЬ\nМара наливает две чашки кофе, которые не собирается пить.", rtl:false},
+  {code:'ka', label:'Georgian', native:'ქართული', font:"'Noto Sans Georgian', sans-serif", sample:"ინტ. სამზარეულო — დღე\nმარა ასხამს ორ ჭიქა ყავას, რომლის დალევასაც არ აპირებს.", rtl:false},
+  {code:'es', label:'Spanish', native:'Español', font:"'Courier Prime', monospace", sample:"INT. COCINA — DÍA\nMara sirve dos tazas de café que no piensa beber.", rtl:false},
+  {code:'fr', label:'French', native:'Français', font:"'Courier Prime', monospace", sample:"INT. CUISINE — JOUR\nMara verse deux tasses de café qu'elle n'a pas l'intention de boire.", rtl:false},
+  {code:'de', label:'German', native:'Deutsch', font:"'Courier Prime', monospace", sample:"INNEN. KÜCHE — TAG\nMara schenkt zwei Tassen Kaffee ein, die sie nicht trinken will.", rtl:false},
+];
+const LANG_BY_CODE = Object.fromEntries(LANGUAGES.map(l=>[l.code,l]));
+
+/* ===================== DATA: FORMATS ===================== */
+const FORMATS = {
+  screenplay:{
+    label:'Screenplay', short:'Feature film / TV drama, single-camera.',
+    elements:[
+      {key:'scene_heading', label:'Scene Heading'},
+      {key:'action', label:'Action'},
+      {key:'character', label:'Character'},
+      {key:'parenthetical', label:'Parenthetical'},
+      {key:'dialogue', label:'Dialogue'},
+      {key:'transition', label:'Transition'},
+      {key:'shot', label:'Shot'},
+    ],
+    next:{scene_heading:'action', action:'action', character:'dialogue', parenthetical:'dialogue', dialogue:'character', transition:'scene_heading', shot:'action'},
+    placeholders:{scene_heading:'INT. LOCATION — DAY', action:'Describe what we see...', character:'CHARACTER NAME', parenthetical:'(quietly)', dialogue:'What they say...', transition:'CUT TO:', shot:'CLOSE ON —'},
+    starter:[['scene_heading','INT. KITCHEN — DAY'],['action','Mara pours two cups of coffee she has no intention of drinking.'],['character','MARA'],['dialogue',"You're up early."]],
+  },
+  stage:{
+    label:'Stage Play', short:'Theatre script — proscenium or black box.',
+    elements:[
+      {key:'act_scene', label:'Act / Scene'},
+      {key:'stage_direction', label:'Stage Direction'},
+      {key:'character', label:'Character'},
+      {key:'dialogue', label:'Dialogue'},
+    ],
+    next:{act_scene:'stage_direction', stage_direction:'character', character:'dialogue', dialogue:'character'},
+    placeholders:{act_scene:'ACT ONE, SCENE ONE', stage_direction:'(The kitchen. Morning light.)', character:'MARA', dialogue:'What they say...'},
+    starter:[['act_scene','ACT ONE, SCENE ONE'],['stage_direction','(The kitchen. Morning light. MARA pours coffee.)'],['character','MARA'],['dialogue',"You're up early."]],
+  },
+  sitcom:{
+    label:'Sitcom (Multi-cam)', short:'Multi-camera comedy, double-spaced dialogue.',
+    elements:[
+      {key:'scene_heading', label:'Scene Heading'},
+      {key:'action', label:'Action'},
+      {key:'character', label:'Character'},
+      {key:'parenthetical', label:'Parenthetical'},
+      {key:'dialogue', label:'Dialogue'},
+    ],
+    next:{scene_heading:'action', action:'action', character:'dialogue', parenthetical:'dialogue', dialogue:'character'},
+    placeholders:{scene_heading:'INT. KITCHEN — DAY', action:'Describe what we see...', character:'CHARACTER NAME', parenthetical:'(beat)', dialogue:'What they say...'},
+    starter:[['scene_heading','INT. KITCHEN — DAY'],['character','MARA'],['dialogue',"You're up early."],['character','DEV'],['parenthetical','(deadpan)'],['dialogue',"I never went to sleep."]],
+  },
+  novel:{
+    label:'Novel / Prose', short:'Manuscript pages for fiction.',
+    elements:[
+      {key:'chapter', label:'Chapter Heading'},
+      {key:'scene_break', label:'Scene Break'},
+      {key:'paragraph', label:'Paragraph'},
+    ],
+    next:{chapter:'paragraph', scene_break:'paragraph', paragraph:'paragraph'},
+    placeholders:{chapter:'Chapter One', scene_break:'* * *', paragraph:'Begin your paragraph...'},
+    starter:[['chapter','Chapter One'],['paragraph','Mara poured two cups of coffee she had no intention of drinking, and set them both on the windowsill to go cold, the way she always did on the mornings she missed her sister.']],
+  },
+  radio:{
+    label:'Radio Drama', short:'Audio script with sound cues.',
+    elements:[
+      {key:'scene_heading', label:'Scene / Cue'},
+      {key:'character', label:'Character'},
+      {key:'dialogue', label:'Dialogue'},
+      {key:'sfx', label:'Sound Cue'},
+    ],
+    next:{scene_heading:'sfx', sfx:'character', character:'dialogue', dialogue:'character'},
+    placeholders:{scene_heading:'SCENE 1: THE KITCHEN', character:'MARA', dialogue:'What they say...', sfx:'[kettle whistling]'},
+    starter:[['scene_heading','SCENE 1: THE KITCHEN'],['sfx','[coffee pot pouring]'],['character','MARA'],['dialogue',"You're up early."]],
+  },
+};
+
+/* ===================== STATE ===================== */
+let scripts = [];
+let currentId = null;
+let idCounter = 1;
+
+function newScript(formatKey, langCode, title){
+  const fmt = FORMATS[formatKey];
+  const id = 's' + (idCounter++);
+  const elements = fmt.starter.map((pair,i)=>({id:id+'-e'+i, type:pair[0], text:pair[1]}));
+  const script = {id, title: title || 'Untitled ' + fmt.label, format: formatKey, lang: langCode || 'en', elements, created: new Date()};
+  scripts.push(script);
+  return script;
+}
+
+/* ===================== NAV ===================== */
+function navigate(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('nav.mainnav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(view).classList.add('active');
+  const navBtn = document.querySelector('nav.mainnav button[data-nav="'+view+'"]');
+  if(navBtn) navBtn.classList.add('active');
+  window.scrollTo(0,0);
+  if(view==='editor') renderEditor();
+  if(view==='library') renderLibrary();
+  if(view==='formats') renderFormatsPage();
+  if(view==='fonts') renderFontsPage();
+}
+document.querySelectorAll('[data-nav]').forEach(el=>{
+  el.addEventListener('click', ()=>navigate(el.getAttribute('data-nav')));
+});
+
+/* ===================== HOME populate ===================== */
+function renderHomeGalleries(){
+  const gal = document.getElementById('homeFormatGallery');
+  gal.innerHTML = Object.entries(FORMATS).map(([key,f])=>`
+    <div class="format-card" data-open-format="${key}">
+      <div class="fname">${f.label}</div>
+      <div class="fdesc">${f.short}</div>
+      <div class="fmini">${f.elements.slice(0,4).map(e=>e.label).join(' · ')}</div>
+    </div>`).join('');
+  gal.querySelectorAll('[data-open-format]').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const fk = card.getAttribute('data-open-format');
+      const s = newScript(fk,'en');
+      currentId = s.id;
+      navigate('editor');
+    });
+  });
+
+  const strip = document.getElementById('homeLangStrip');
+  strip.innerHTML = LANGUAGES.slice(0,10).map(l=>`<span class="lang-pill" style="font-family:${l.font}">${l.native}</span>`).join('');
+}
+
+/* ===================== EDITOR ===================== */
+function ensureCurrentScript(){
+  if(!currentId || !scripts.find(s=>s.id===currentId)){
+    if(scripts.length===0){
+      const s = newScript('screenplay','en');
+      currentId = s.id;
+    } else {
+      currentId = scripts[scripts.length-1].id;
+    }
+  }
+}
+
+function getCurrent(){ return scripts.find(s=>s.id===currentId); }
+
+function renderEditor(){
+  ensureCurrentScript();
+  const script = getCurrent();
+  const fmt = FORMATS[script.format];
+  const lang = LANG_BY_CODE[script.lang];
+
+  /* --- side tools --- */
+  const side = document.getElementById('sideTools');
+  side.innerHTML = `
+    <h4>Format</h4>
+    <select class="tool-select" id="fmtSelect">
+      ${Object.entries(FORMATS).map(([k,f])=>`<option value="${k}" ${k===script.format?'selected':''}>${f.label}</option>`).join('')}
+    </select>
+
+    <h4>Language / Font</h4>
+    <select class="tool-select" id="langSelect">
+      ${LANGUAGES.map(l=>`<option value="${l.code}" ${l.code===script.lang?'selected':''}>${l.native} — ${l.label}</option>`).join('')}
+    </select>
+
+    <h4>Elements <span style="float:right;font-weight:400;color:var(--muted)">Tab ⇄</span></h4>
+    <div class="el-btns" id="elBtns"></div>
+
+    <div class="stat-line" id="statLine"></div>
+
+    <h4>Script</h4>
+    <div class="side-actions">
+      <button class="btn ghost small" id="btnExportTxt">Export .txt</button>
+      <button class="btn ghost small" id="btnPrint">Print / Save PDF</button>
+      <button class="btn ghost small" id="btnDup">Duplicate script</button>
+      <button class="btn danger small" id="btnDeleteFromEditor">Delete script</button>
+    </div>
+  `;
+
+  document.getElementById('fmtSelect').addEventListener('change', e=>{
+    const newFmt = e.target.value;
+    if(!confirm('Switching format will reset the elements in this script to a starter for "'+FORMATS[newFmt].label+'". Continue?')) {
+      e.target.value = script.format; return;
+    }
+    script.format = newFmt;
+    const starter = FORMATS[newFmt].starter;
+    script.elements = starter.map((pair,i)=>({id:script.id+'-e'+i+'-'+Date.now(), type:pair[0], text:pair[1]}));
+    renderEditor();
+  });
+  document.getElementById('langSelect').addEventListener('change', e=>{
+    script.lang = e.target.value;
+    renderEditor();
+  });
+  document.getElementById('btnExportTxt').addEventListener('click', ()=>exportTxt(script));
+  document.getElementById('btnPrint').addEventListener('click', ()=>window.print());
+  document.getElementById('btnDup').addEventListener('click', ()=>{
+    const copy = JSON.parse(JSON.stringify(script));
+    copy.id = 's'+(idCounter++);
+    copy.title = script.title + ' (copy)';
+    copy.elements = copy.elements.map((el,i)=>({...el, id:copy.id+'-e'+i}));
+    scripts.push(copy);
+    currentId = copy.id;
+    renderEditor();
+  });
+  document.getElementById('btnDeleteFromEditor').addEventListener('click', ()=>{
+    if(!confirm('Delete "'+script.title+'"? This cannot be undone.')) return;
+    scripts = scripts.filter(s=>s.id!==script.id);
+    currentId = null;
+    renderEditor();
+  });
+
+  renderElementButtons(script, fmt);
+
+  /* --- main page --- */
+  const main = document.getElementById('editorMain');
+  main.innerHTML = `
+    <div class="editor-header">
+      <input type="text" class="title-input" id="titleInput" value="${escapeAttr(script.title)}">
+      <div class="header-actions">
+        <button class="btn ghost small" data-nav="library">My scripts</button>
+      </div>
+    </div>
+    <div class="page" id="pageEl" data-format="${script.format}" dir="${lang.rtl?'rtl':'ltr'}" style="font-family:${lang.font}"></div>
+  `;
+  document.querySelectorAll('#editorMain [data-nav]').forEach(el=>el.addEventListener('click',()=>navigate(el.getAttribute('data-nav'))));
+
+  document.getElementById('titleInput').addEventListener('input', e=>{ script.title = e.target.value; });
+
+  const pageEl = document.getElementById('pageEl');
+  script.elements.forEach(el=> pageEl.appendChild(buildElementDiv(script, fmt, el)));
+  if(script.elements.length===0){
+    const first = {id:script.id+'-e0', type:fmt.elements[0].key, text:''};
+    script.elements.push(first);
+    pageEl.appendChild(buildElementDiv(script, fmt, first));
+  }
+  updateStatLine(script);
+
+  pageEl.addEventListener('focusin', e=>{
+    pageEl.querySelectorAll('.el').forEach(d=>d.classList.remove('focused'));
+    const target = e.target.closest('.el');
+    if(target){ target.classList.add('focused'); highlightElBtn(target.dataset.type); }
+  });
+}
+
+function highlightElBtn(type){
+  document.querySelectorAll('.el-btn').forEach(b=>b.classList.toggle('current', b.dataset.type===type));
+}
+
+function renderElementButtons(script, fmt){
+  const host = document.getElementById('elBtns');
+  host.innerHTML = fmt.elements.map(e=>`<button class="el-btn" data-type="${e.key}">${e.label}</button>`).join('');
+  host.querySelectorAll('.el-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const pageEl = document.getElementById('pageEl');
+      const focused = pageEl.querySelector('.el.focused') || pageEl.querySelector('.el');
+      if(!focused) return;
+      const newType = btn.dataset.type;
+      focused.dataset.type = newType;
+      const elData = script.elements.find(x=>x.id===focused.dataset.id);
+      if(elData) elData.type = newType;
+      focused.setAttribute('data-ph', fmt.placeholders[newType] || '');
+      highlightElBtn(newType);
+      focused.focus();
+    });
+  });
+}
+
+function buildElementDiv(script, fmt, elData){
+  const div = document.createElement('div');
+  div.className = 'el';
+  div.contentEditable = 'true';
+  div.dataset.type = elData.type;
+  div.dataset.id = elData.id;
+  div.setAttribute('data-ph', fmt.placeholders[elData.type] || '');
+  div.textContent = elData.text || '';
+  div.addEventListener('input', ()=>{
+    elData.text = div.textContent;
+    updateStatLine(script);
+  });
+  div.addEventListener('keydown', (ev)=>onElKeydown(ev, script, fmt, div, elData));
+  return div;
+}
+
+function onElKeydown(ev, script, fmt, div, elData){
+  const pageEl = document.getElementById('pageEl');
+
+  if(ev.key === 'Tab'){
+    ev.preventDefault();
+    const keys = fmt.elements.map(e=>e.key);
+    let idx = keys.indexOf(div.dataset.type);
+    idx = ev.shiftKey ? (idx-1+keys.length)%keys.length : (idx+1)%keys.length;
+    const newType = keys[idx];
+    div.dataset.type = newType;
+    elData.type = newType;
+    div.setAttribute('data-ph', fmt.placeholders[newType] || '');
+    highlightElBtn(newType);
+    return;
+  }
+
+  if(ev.key === 'Enter'){
+    ev.preventDefault();
+    const nextType = fmt.next[div.dataset.type] || fmt.elements[0].key;
+    const newId = script.id + '-e' + Date.now();
+    const newData = {id:newId, type:nextType, text:''};
+    const idx = script.elements.findIndex(x=>x.id===elData.id);
+    script.elements.splice(idx+1, 0, newData);
+    const newDiv = buildElementDiv(script, fmt, newData);
+    div.after(newDiv);
+    newDiv.focus();
+    updateStatLine(script);
+    return;
+  }
+
+  if(ev.key === 'Backspace' && div.textContent.length===0 && script.elements.length>1){
+    ev.preventDefault();
+    const idx = script.elements.findIndex(x=>x.id===elData.id);
+    const prevDiv = div.previousElementSibling;
+    script.elements.splice(idx,1);
+    div.remove();
+    if(prevDiv){
+      prevDiv.focus();
+      placeCursorAtEnd(prevDiv);
+    }
+    updateStatLine(script);
+    return;
+  }
+}
+
+function placeCursorAtEnd(el){
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function updateStatLine(script){
+  const words = script.elements.map(e=>e.text||'').join(' ').trim().split(/\s+/).filter(Boolean).length;
+  const lines = script.elements.length;
+  const stat = document.getElementById('statLine');
+  if(stat) stat.textContent = words + ' words · ' + lines + ' elements · ~' + Math.max(1, Math.ceil(lines/18)) + ' page(s)';
+}
+
+function exportTxt(script){
+  const fmt = FORMATS[script.format];
+  let out = script.title.toUpperCase() + '\n' + '='.repeat(script.title.length) + '\n\n';
+  const indent = {scene_heading:0, action:0, character:12, parenthetical:16, dialogue:8, transition:40, shot:0,
+                   act_scene:0, stage_direction:6, chapter:0, scene_break:0, paragraph:0, sfx:0};
+  script.elements.forEach(el=>{
+    const pad = ' '.repeat(indent[el.type]||0);
+    let txt = el.text || '';
+    if(['scene_heading','character','transition','shot','act_scene'].includes(el.type)) txt = txt.toUpperCase();
+    out += pad + txt + '\n\n';
+  });
+  const blob = new Blob([out], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = (script.title || 'script').replace(/[^a-z0-9]+/gi,'_') + '.txt';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function escapeAttr(s){ return (s||'').replace(/"/g,'&quot;'); }
+
+/* ===================== LIBRARY ===================== */
+function renderLibrary(){
+  const host = document.getElementById('libPanelHost');
+  host.innerHTML = `<button class="btn oxide small" id="btnShowNewPanel">+ New script</button><div id="newPanelSlot"></div>`;
+  document.getElementById('btnShowNewPanel').addEventListener('click', showNewScriptPanel);
+
+  const grid = document.getElementById('libGrid');
+  if(scripts.length===0){
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>No scripts yet</h3><p>Start one from a format below or from the "+ New script" button.</p></div>`;
+  } else {
+    grid.innerHTML = scripts.map(s=>{
+      const fmt = FORMATS[s.format];
+      const lang = LANG_BY_CODE[s.lang];
+      return `<div class="lib-card" data-open="${s.id}">
+        <span class="ltag">${fmt.label}</span>
+        <div class="lname">${s.title}</div>
+        <div class="lmeta">${lang.native} · ${s.elements.length} elements</div>
+        <div class="lactions">
+          <button class="btn ghost small" data-open2="${s.id}">Open</button>
+          <button class="btn ghost small" data-dup="${s.id}">Duplicate</button>
+          <button class="btn danger small" data-del="${s.id}">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  grid.querySelectorAll('[data-open], [data-open2]').forEach(el=>{
+    el.addEventListener('click', (ev)=>{
+      if(ev.target.closest('[data-dup],[data-del]')) return;
+      const id = el.getAttribute('data-open') || el.getAttribute('data-open2');
+      currentId = id; navigate('editor');
+    });
+  });
+  grid.querySelectorAll('[data-dup]').forEach(btn=>{
+    btn.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      const id = btn.getAttribute('data-dup');
+      const s = scripts.find(x=>x.id===id);
+      const copy = JSON.parse(JSON.stringify(s));
+      copy.id = 's'+(idCounter++);
+      copy.title = s.title + ' (copy)';
+      copy.elements = copy.elements.map((el,i)=>({...el, id:copy.id+'-e'+i}));
+      scripts.push(copy);
+      renderLibrary();
+    });
+  });
+  grid.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      const id = btn.getAttribute('data-del');
+      const s = scripts.find(x=>x.id===id);
+      if(!confirm('Delete "'+s.title+'"?')) return;
+      scripts = scripts.filter(x=>x.id!==id);
+      if(currentId===id) currentId = null;
+      renderLibrary();
+    });
+  });
+}
+
+function showNewScriptPanel(){
+  const slot = document.getElementById('newPanelSlot');
+  slot.innerHTML = `
+    <div class="panel">
+      <h3>New script</h3>
+      <div class="field">
+        <label>Title</label>
+        <input type="text" class="tool-input" id="npTitle" placeholder="Untitled script">
+      </div>
+      <div class="field">
+        <label>Format</label>
+        <select class="tool-select" id="npFormat">
+          ${Object.entries(FORMATS).map(([k,f])=>`<option value="${k}">${f.label}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>Language / Font</label>
+        <select class="tool-select" id="npLang">
+          ${LANGUAGES.map(l=>`<option value="${l.code}">${l.native} — ${l.label}</option>`).join('')}
+        </select>
+      </div>
+      <button class="btn oxide small" id="npCreate">Create &amp; open</button>
+      <button class="btn ghost small" id="npCancel">Cancel</button>
+    </div>`;
+  document.getElementById('npCreate').addEventListener('click', ()=>{
+    const title = document.getElementById('npTitle').value.trim();
+    const format = document.getElementById('npFormat').value;
+    const lang = document.getElementById('npLang').value;
+    const s = newScript(format, lang, title);
+    currentId = s.id;
+    navigate('editor');
+  });
+  document.getElementById('npCancel').addEventListener('click', ()=>{ slot.innerHTML=''; });
+}
+
+/* ===================== FORMATS PAGE ===================== */
+function renderFormatsPage(){
+  const host = document.getElementById('fmtDetailHost');
+  host.innerHTML = Object.entries(FORMATS).map(([key,f])=>`
+    <div class="fmt-detail">
+      <div>
+        <h3>${f.label}</h3>
+        <p>${f.short}</p>
+        <ul>${f.elements.map(e=>'<li>'+e.label+'</li>').join('')}</ul>
+        <div style="margin-top:16px;"><button class="btn ghost small" data-start="${key}">Start a ${f.label.toLowerCase()}</button></div>
+      </div>
+      <div class="fmt-preview" data-format="${key}">
+        ${f.starter.map(([type,text])=>`<div style="margin-bottom:8px;">${previewLine(key,type,text)}</div>`).join('')}
+      </div>
+    </div>
+  `).join('');
+  host.querySelectorAll('[data-start]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const s = newScript(btn.getAttribute('data-start'), 'en');
+      currentId = s.id;
+      navigate('editor');
+    });
+  });
+}
+function previewLine(fmtKey, type, text){
+  const styles = {
+    scene_heading:'font-weight:700;text-transform:uppercase;font-family:monospace;',
+    action:'font-family:monospace;',
+    character:'font-weight:700;text-transform:uppercase;font-family:monospace;margin-left:30%;',
+    parenthetical:'font-style:italic;font-family:monospace;margin-left:24%;',
+    dialogue:'font-family:monospace;margin-left:16%;',
+    transition:'font-weight:700;text-transform:uppercase;font-family:monospace;text-align:right;',
+    shot:'font-weight:700;text-transform:uppercase;font-family:monospace;',
+    act_scene:'font-weight:700;text-align:center;text-transform:uppercase;',
+    stage_direction:'font-style:italic;',
+    chapter:'font-weight:700;text-align:center;font-size:14px;',
+    scene_break:'text-align:center;letter-spacing:.3em;',
+    paragraph:'text-indent:1.4em;',
+    sfx:'font-style:italic;text-transform:uppercase;color:#7E2F20;',
+  };
+  return `<span style="${styles[type]||''}">${text}</span>`;
+}
+
+/* ===================== FONTS PAGE ===================== */
+function renderFontsPage(){
+  const host = document.getElementById('fontGrid');
+  host.innerHTML = LANGUAGES.map(l=>`
+    <div class="font-card" ${l.rtl?'dir="rtl"':''}>
+      <div class="flabel">${l.native.toUpperCase()} · ${l.label}${l.rtl?' · RTL':''}</div>
+      <div class="fsample" style="font-family:${l.font}; white-space:pre-line;">${l.sample}</div>
+    </div>
+  `).join('');
+}
+
+/* ===================== INIT ===================== */
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'});
+renderHomeGalleries();
+navigate('home');
+
+})();
+</script>
+</body>
+</html>
