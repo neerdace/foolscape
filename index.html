@@ -187,7 +187,57 @@
     box-shadow:0 1px 0 var(--rule), 0 20px 44px -30px rgba(27,29,36,0.4);
     border:1px solid var(--rule);
     padding:64px 60px;min-height:600px;
+    display:none;
   }
+  .page.tab-active{display:block;}
+
+  /* page tabs (title page / manuscript) */
+  .page-tabs{max-width:760px;margin:0 auto 16px;display:flex;gap:4px;}
+  .tabbtn{
+    font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--muted);
+    background:var(--paper-dim);border:1px solid var(--rule);border-bottom:none;
+    padding:9px 16px;cursor:pointer;border-radius:3px 3px 0 0;
+  }
+  .tabbtn.active{color:var(--oxide);background:var(--white);}
+
+  /* title page */
+  .title-page{
+    font-family:var(--font-mono);display:flex;flex-direction:column;justify-content:space-between;
+  }
+  .tp-title-wrap{margin-top:14%;text-align:center;}
+  .tp-input{
+    font-family:inherit;border:none;background:transparent;text-align:center;color:var(--ink);
+    width:100%;padding:4px 0;
+  }
+  .tp-input:focus{outline:none;background:rgba(166,64,44,0.06);}
+  .tp-title{font-size:26px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-bottom:26px;}
+  .tp-credit-block{max-width:340px;margin:0 auto;}
+  .tp-credit{font-size:14px;}
+  .tp-author{font-size:14px;font-weight:700;margin-top:2px;}
+  .tp-source{font-size:12.5px;color:var(--muted);margin-top:16px;}
+  .tp-corners{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-top:40px;}
+  .tp-contact{
+    font-family:inherit;font-size:11.5px;text-align:left;border:none;background:transparent;color:var(--ink-soft);
+    resize:none;width:200px;height:48px;padding:0;
+  }
+  .tp-contact:focus{outline:none;background:rgba(166,64,44,0.06);}
+  .tp-date{font-size:11.5px;text-align:right;width:140px;}
+
+  /* scene-heading helper tools */
+  .loc-btns{display:flex;gap:6px;flex-wrap:wrap;}
+  .loc-btns .btn{flex:1;padding:7px 6px;}
+  .tool-hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5;}
+  .check-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;}
+  .check-row input{accent-color:var(--oxide);width:14px;height:14px;}
+
+  /* scene numbering badges */
+  .el-row{display:contents;}
+  .el-row.is-scene{
+    display:flex;align-items:baseline;gap:10px;
+  }
+  .el-row.is-scene .el{flex:1;}
+  .scene-badge{display:none;flex:none;font-family:var(--font-mono);font-size:12px;color:var(--muted);}
+  .page.show-scene-numbers .el-row.is-scene .scene-badge{display:inline-block;}
   .el{
     outline:none;border:none;min-height:1.2em;
     font-size:14.5px;line-height:1.75;color:var(--ink);
@@ -332,13 +382,16 @@
     body *{visibility:hidden;}
     #editorView, #editorView *{visibility:visible;}
     #editorView{position:absolute;top:0;left:0;width:100%;}
-    .side-tools, .editor-header, footer.site, .topbar{display:none !important;}
+    .side-tools, .editor-header, footer.site, .topbar, .page-tabs{display:none !important;}
     .editor-main{padding:0;}
     .page{
+      display:block !important;
       box-shadow:none;border:none;max-width:none;width:8.5in;min-height:11in;
       margin:0 auto;padding:1in 1in 1in 1.5in;
     }
     .page[data-format="stage"], .page[data-format="novel"], .page[data-format="radio"]{padding:1in;}
+    .title-page{page-break-after:always;padding:1in;}
+    .el-row.is-scene{display:flex !important;}
   }
 </style>
 </head>
@@ -549,6 +602,7 @@ const FORMATS = {
     next:{scene_heading:'action', action:'action', character:'dialogue', parenthetical:'dialogue', dialogue:'character', transition:'scene_heading', shot:'action'},
     placeholders:{scene_heading:'INT. LOCATION — DAY', action:'Describe what we see...', character:'CHARACTER NAME', parenthetical:'(quietly)', dialogue:'What they say...', transition:'CUT TO:', shot:'CLOSE ON —'},
     starter:[['scene_heading','INT. KITCHEN — DAY'],['action','Mara pours two cups of coffee she has no intention of drinking.'],['character','MARA'],['dialogue',"You're up early."]],
+    sceneKey:'scene_heading', hasLocationHelpers:true,
   },
   stage:{
     label:'Stage Play', short:'Theatre script — proscenium or black box.',
@@ -561,6 +615,7 @@ const FORMATS = {
     next:{act_scene:'stage_direction', stage_direction:'character', character:'dialogue', dialogue:'character'},
     placeholders:{act_scene:'ACT ONE, SCENE ONE', stage_direction:'(The kitchen. Morning light.)', character:'MARA', dialogue:'What they say...'},
     starter:[['act_scene','ACT ONE, SCENE ONE'],['stage_direction','(The kitchen. Morning light. MARA pours coffee.)'],['character','MARA'],['dialogue',"You're up early."]],
+    sceneKey:'act_scene', hasLocationHelpers:false,
   },
   sitcom:{
     label:'Sitcom (Multi-cam)', short:'Multi-camera comedy, double-spaced dialogue.',
@@ -574,6 +629,7 @@ const FORMATS = {
     next:{scene_heading:'action', action:'action', character:'dialogue', parenthetical:'dialogue', dialogue:'character'},
     placeholders:{scene_heading:'INT. KITCHEN — DAY', action:'Describe what we see...', character:'CHARACTER NAME', parenthetical:'(beat)', dialogue:'What they say...'},
     starter:[['scene_heading','INT. KITCHEN — DAY'],['character','MARA'],['dialogue',"You're up early."],['character','DEV'],['parenthetical','(deadpan)'],['dialogue',"I never went to sleep."]],
+    sceneKey:'scene_heading', hasLocationHelpers:true,
   },
   novel:{
     label:'Novel / Prose', short:'Manuscript pages for fiction.',
@@ -585,6 +641,7 @@ const FORMATS = {
     next:{chapter:'paragraph', scene_break:'paragraph', paragraph:'paragraph'},
     placeholders:{chapter:'Chapter One', scene_break:'* * *', paragraph:'Begin your paragraph...'},
     starter:[['chapter','Chapter One'],['paragraph','Mara poured two cups of coffee she had no intention of drinking, and set them both on the windowsill to go cold, the way she always did on the mornings she missed her sister.']],
+    sceneKey:'chapter', hasLocationHelpers:false,
   },
   radio:{
     label:'Radio Drama', short:'Audio script with sound cues.',
@@ -597,8 +654,11 @@ const FORMATS = {
     next:{scene_heading:'sfx', sfx:'character', character:'dialogue', dialogue:'character'},
     placeholders:{scene_heading:'SCENE 1: THE KITCHEN', character:'MARA', dialogue:'What they say...', sfx:'[kettle whistling]'},
     starter:[['scene_heading','SCENE 1: THE KITCHEN'],['sfx','[coffee pot pouring]'],['character','MARA'],['dialogue',"You're up early."]],
+    sceneKey:'scene_heading', hasLocationHelpers:true,
   },
 };
+
+const TIME_OPTIONS = ['DAY','NIGHT','MORNING','EVENING','DAWN','DUSK','CONTINUOUS','LATER','MOMENTS LATER','SAME TIME'];
 
 /* ===================== STATE ===================== */
 let scripts = [];
@@ -609,7 +669,12 @@ function newScript(formatKey, langCode, title){
   const fmt = FORMATS[formatKey];
   const id = 's' + (idCounter++);
   const elements = fmt.starter.map((pair,i)=>({id:id+'-e'+i, type:pair[0], text:pair[1]}));
-  const script = {id, title: title || 'Untitled ' + fmt.label, format: formatKey, lang: langCode || 'en', elements, created: new Date()};
+  const finalTitle = title || 'Untitled ' + fmt.label;
+  const script = {
+    id, title: finalTitle, format: formatKey, lang: langCode || 'en', elements, created: new Date(),
+    showSceneNumbers:false, activePageTab:'script',
+    titlePage:{ title: finalTitle, credit:'Written by', author:'', source:'', contact:'', date:'' },
+  };
   scripts.push(script);
   return script;
 }
@@ -689,6 +754,28 @@ function renderEditor(){
     <h4>Elements <span style="float:right;font-weight:400;color:var(--muted)">Tab ⇄</span></h4>
     <div class="el-btns" id="elBtns"></div>
 
+    ${fmt.hasLocationHelpers ? `
+    <h4>Scene Heading Tools</h4>
+    <div class="loc-btns" id="locBtns">
+      <button class="btn ghost small" data-prefix="INT.">INT.</button>
+      <button class="btn ghost small" data-prefix="EXT.">EXT.</button>
+      <button class="btn ghost small" data-prefix="INT./EXT.">INT./EXT.</button>
+    </div>
+    <select class="tool-select" id="timeSelect" style="margin-top:8px;">
+      <option value="">— Time of day —</option>
+      ${TIME_OPTIONS.map(t=>`<option value="${t}">${t}</option>`).join('')}
+    </select>
+    <div class="tool-hint">Click into a scene heading line first, then use these.</div>
+    ` : ''}
+
+    ${fmt.sceneKey ? `
+    <h4>Numbering</h4>
+    <label class="check-row">
+      <input type="checkbox" id="sceneNumToggle" ${script.showSceneNumbers?'checked':''}>
+      Show ${fmt.elements.find(e=>e.key===fmt.sceneKey).label.toLowerCase()} numbers
+    </label>
+    ` : ''}
+
     <div class="stat-line" id="statLine"></div>
 
     <h4>Script</h4>
@@ -734,6 +821,45 @@ function renderEditor(){
 
   renderElementButtons(script, fmt);
 
+  if(fmt.hasLocationHelpers){
+    document.querySelectorAll('#locBtns [data-prefix]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const target = lastFocusedSceneEl && document.body.contains(lastFocusedSceneEl) ? lastFocusedSceneEl : document.querySelector('#pageEl .el[data-type="'+fmt.sceneKey+'"]');
+        if(!target){ return; }
+        const prefix = btn.getAttribute('data-prefix');
+        let txt = target.textContent.replace(/^(INT\.\/EXT\.|INT\.|EXT\.)\s*/i, '');
+        target.textContent = prefix + (txt ? ' ' + txt : ' ');
+        const elData = script.elements.find(x=>x.id===target.dataset.id);
+        if(elData) elData.text = target.textContent;
+        target.focus();
+        placeCursorAtEnd(target);
+        updateStatLine(script);
+      });
+    });
+    document.getElementById('timeSelect').addEventListener('change', e=>{
+      const val = e.target.value;
+      if(!val) return;
+      const target = lastFocusedSceneEl && document.body.contains(lastFocusedSceneEl) ? lastFocusedSceneEl : document.querySelector('#pageEl .el[data-type="'+fmt.sceneKey+'"]');
+      if(!target){ e.target.value=''; return; }
+      let txt = target.textContent.replace(/\s*—\s*[A-Z\s]+$/,'');
+      target.textContent = txt + ' — ' + val;
+      const elData = script.elements.find(x=>x.id===target.dataset.id);
+      if(elData) elData.text = target.textContent;
+      target.focus();
+      placeCursorAtEnd(target);
+      updateStatLine(script);
+      e.target.value = '';
+    });
+  }
+
+  if(fmt.sceneKey){
+    document.getElementById('sceneNumToggle').addEventListener('change', e=>{
+      script.showSceneNumbers = e.target.checked;
+      document.getElementById('pageEl').classList.toggle('show-scene-numbers', script.showSceneNumbers);
+      renumberScenes(script, fmt);
+    });
+  }
+
   /* --- main page --- */
   const main = document.getElementById('editorMain');
   main.innerHTML = `
@@ -743,25 +869,99 @@ function renderEditor(){
         <button class="btn ghost small" data-nav="library">My scripts</button>
       </div>
     </div>
+    <div class="page-tabs">
+      <button class="tabbtn" data-tab="title" id="tabTitleBtn">Title Page</button>
+      <button class="tabbtn" data-tab="script" id="tabScriptBtn">Manuscript</button>
+    </div>
+    <div class="page title-page" id="titlePageEl"></div>
     <div class="page" id="pageEl" data-format="${script.format}" dir="${lang.rtl?'rtl':'ltr'}" style="font-family:${lang.font}"></div>
   `;
   document.querySelectorAll('#editorMain [data-nav]').forEach(el=>el.addEventListener('click',()=>navigate(el.getAttribute('data-nav'))));
 
-  document.getElementById('titleInput').addEventListener('input', e=>{ script.title = e.target.value; });
+  document.getElementById('titleInput').addEventListener('input', e=>{
+    script.title = e.target.value;
+    updatePageTabsVisibility();
+  });
+
+  buildTitlePage(script);
+  document.getElementById('tabTitleBtn').addEventListener('click', ()=>{ script.activePageTab='title'; updatePageTabsVisibility(); });
+  document.getElementById('tabScriptBtn').addEventListener('click', ()=>{ script.activePageTab='script'; updatePageTabsVisibility(); });
+  updatePageTabsVisibility();
 
   const pageEl = document.getElementById('pageEl');
+  pageEl.classList.toggle('show-scene-numbers', !!script.showSceneNumbers);
   script.elements.forEach(el=> pageEl.appendChild(buildElementDiv(script, fmt, el)));
   if(script.elements.length===0){
     const first = {id:script.id+'-e0', type:fmt.elements[0].key, text:''};
     script.elements.push(first);
     pageEl.appendChild(buildElementDiv(script, fmt, first));
   }
+  renumberScenes(script, fmt);
   updateStatLine(script);
 
   pageEl.addEventListener('focusin', e=>{
     pageEl.querySelectorAll('.el').forEach(d=>d.classList.remove('focused'));
     const target = e.target.closest('.el');
-    if(target){ target.classList.add('focused'); highlightElBtn(target.dataset.type); }
+    if(target){
+      target.classList.add('focused');
+      highlightElBtn(target.dataset.type);
+      if(fmt.sceneKey && target.dataset.type === fmt.sceneKey) lastFocusedSceneEl = target;
+    }
+  });
+}
+
+/* remembers the last-focused scene-heading-type element so sidebar
+   INT/EXT and time-of-day tools have something to act on */
+let lastFocusedSceneEl = null;
+
+function updatePageTabsVisibility(){
+  const script = getCurrent();
+  const titleEl = document.getElementById('titlePageEl');
+  const pageEl = document.getElementById('pageEl');
+  const tTab = document.getElementById('tabTitleBtn');
+  const sTab = document.getElementById('tabScriptBtn');
+  if(!titleEl || !pageEl) return;
+  const onTitle = script.activePageTab === 'title';
+  titleEl.classList.toggle('tab-active', onTitle);
+  pageEl.classList.toggle('tab-active', !onTitle);
+  if(tTab) tTab.classList.toggle('active', onTitle);
+  if(sTab) sTab.classList.toggle('active', !onTitle);
+}
+
+function buildTitlePage(script){
+  const host = document.getElementById('titlePageEl');
+  const tp = script.titlePage;
+  host.innerHTML = `
+    <div class="tp-title-wrap">
+      <input class="tp-input tp-title" id="tpTitle" value="${escapeAttr(tp.title)}" placeholder="TITLE">
+      <div class="tp-credit-block">
+        <input class="tp-input tp-credit" id="tpCredit" value="${escapeAttr(tp.credit)}" placeholder="Written by">
+        <input class="tp-input tp-author" id="tpAuthor" value="${escapeAttr(tp.author)}" placeholder="Author Name">
+        <input class="tp-input tp-source" id="tpSource" value="${escapeAttr(tp.source)}" placeholder="Based on ... (optional)">
+      </div>
+    </div>
+    <div class="tp-corners">
+      <textarea class="tp-input tp-contact" id="tpContact" placeholder="Contact&#10;email · phone">${escapeAttr(tp.contact)}</textarea>
+      <input class="tp-input tp-date" id="tpDate" value="${escapeAttr(tp.date)}" placeholder="Draft date">
+    </div>
+  `;
+  const bind = (id, field)=> document.getElementById(id).addEventListener('input', e=>{ tp[field] = e.target.value; });
+  bind('tpTitle','title'); bind('tpCredit','credit'); bind('tpAuthor','author');
+  bind('tpSource','source'); bind('tpContact','contact'); bind('tpDate','date');
+}
+
+function renumberScenes(script, fmt){
+  if(!fmt.sceneKey) return;
+  const pageEl = document.getElementById('pageEl');
+  if(!pageEl) return;
+  let n = 0;
+  pageEl.querySelectorAll('.el-row').forEach(row=>{
+    const isScene = row.dataset.type === fmt.sceneKey;
+    row.classList.toggle('is-scene', isScene);
+    if(isScene){
+      n++;
+      row.querySelectorAll('.scene-badge').forEach(b=> b.textContent = String(n));
+    }
   });
 }
 
@@ -779,16 +979,28 @@ function renderElementButtons(script, fmt){
       if(!focused) return;
       const newType = btn.dataset.type;
       focused.dataset.type = newType;
+      focused.closest('.el-row').dataset.type = newType;
       const elData = script.elements.find(x=>x.id===focused.dataset.id);
       if(elData) elData.type = newType;
       focused.setAttribute('data-ph', fmt.placeholders[newType] || '');
       highlightElBtn(newType);
       focused.focus();
+      renumberScenes(script, fmt);
     });
   });
 }
 
 function buildElementDiv(script, fmt, elData){
+  const row = document.createElement('div');
+  row.className = 'el-row';
+  row.dataset.type = elData.type;
+  row.dataset.id = elData.id;
+
+  const leftBadge = document.createElement('span');
+  leftBadge.className = 'scene-badge left';
+  const rightBadge = document.createElement('span');
+  rightBadge.className = 'scene-badge right';
+
   const div = document.createElement('div');
   div.className = 'el';
   div.contentEditable = 'true';
@@ -801,11 +1013,15 @@ function buildElementDiv(script, fmt, elData){
     updateStatLine(script);
   });
   div.addEventListener('keydown', (ev)=>onElKeydown(ev, script, fmt, div, elData));
-  return div;
+
+  row.appendChild(leftBadge);
+  row.appendChild(div);
+  row.appendChild(rightBadge);
+  return row;
 }
 
 function onElKeydown(ev, script, fmt, div, elData){
-  const pageEl = document.getElementById('pageEl');
+  const row = div.closest('.el-row');
 
   if(ev.key === 'Tab'){
     ev.preventDefault();
@@ -814,9 +1030,11 @@ function onElKeydown(ev, script, fmt, div, elData){
     idx = ev.shiftKey ? (idx-1+keys.length)%keys.length : (idx+1)%keys.length;
     const newType = keys[idx];
     div.dataset.type = newType;
+    row.dataset.type = newType;
     elData.type = newType;
     div.setAttribute('data-ph', fmt.placeholders[newType] || '');
     highlightElBtn(newType);
+    renumberScenes(script, fmt);
     return;
   }
 
@@ -827,24 +1045,27 @@ function onElKeydown(ev, script, fmt, div, elData){
     const newData = {id:newId, type:nextType, text:''};
     const idx = script.elements.findIndex(x=>x.id===elData.id);
     script.elements.splice(idx+1, 0, newData);
-    const newDiv = buildElementDiv(script, fmt, newData);
-    div.after(newDiv);
-    newDiv.focus();
+    const newRow = buildElementDiv(script, fmt, newData);
+    row.after(newRow);
+    newRow.querySelector('.el').focus();
     updateStatLine(script);
+    renumberScenes(script, fmt);
     return;
   }
 
   if(ev.key === 'Backspace' && div.textContent.length===0 && script.elements.length>1){
     ev.preventDefault();
     const idx = script.elements.findIndex(x=>x.id===elData.id);
-    const prevDiv = div.previousElementSibling;
+    const prevRow = row.previousElementSibling;
     script.elements.splice(idx,1);
-    div.remove();
-    if(prevDiv){
+    row.remove();
+    if(prevRow){
+      const prevDiv = prevRow.querySelector('.el');
       prevDiv.focus();
       placeCursorAtEnd(prevDiv);
     }
     updateStatLine(script);
+    renumberScenes(script, fmt);
     return;
   }
 }
@@ -867,13 +1088,27 @@ function updateStatLine(script){
 
 function exportTxt(script){
   const fmt = FORMATS[script.format];
-  let out = script.title.toUpperCase() + '\n' + '='.repeat(script.title.length) + '\n\n';
+  const tp = script.titlePage;
+  let out = '';
+  out += (tp.title || script.title).toUpperCase() + '\n';
+  out += (tp.credit || 'Written by') + '\n';
+  if(tp.author) out += tp.author + '\n';
+  if(tp.source) out += tp.source + '\n';
+  if(tp.date) out += tp.date + '\n';
+  if(tp.contact) out += '\n' + tp.contact + '\n';
+  out += '\n' + '-'.repeat(40) + '\n\n';
+
   const indent = {scene_heading:0, action:0, character:12, parenthetical:16, dialogue:8, transition:40, shot:0,
                    act_scene:0, stage_direction:6, chapter:0, scene_break:0, paragraph:0, sfx:0};
+  let sceneN = 0;
   script.elements.forEach(el=>{
     const pad = ' '.repeat(indent[el.type]||0);
     let txt = el.text || '';
     if(['scene_heading','character','transition','shot','act_scene'].includes(el.type)) txt = txt.toUpperCase();
+    if(script.showSceneNumbers && fmt.sceneKey && el.type===fmt.sceneKey){
+      sceneN++;
+      txt = sceneN + '.  ' + txt;
+    }
     out += pad + txt + '\n\n';
   });
   const blob = new Blob([out], {type:'text/plain'});
